@@ -4,12 +4,12 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import f1_score
 
-SAVED_MODEL = './model/classifier.sav'
+SAVED_MODEL = '../model/classifier.sav'
 
 class AirQualityClassifier():
     def load_data(self, train_file_path):
         """Reads the train csv and splits the data in train and test"""
-        self.train_df = pd.read_csv('./data/train.csv', sep=';')
+        self.train_df = pd.read_csv(train_file_path, sep=';')
         self.splitted_data = self.split_data()
 
     def split_data(self):
@@ -21,33 +21,23 @@ class AirQualityClassifier():
         return train_test_split(data, target, test_size=split_ratio)
 
     def fit(self):
-        """Performs a grid search cross validation to find the 
-        best model."""
+        """Performs a grid search to find the best model."""
         params = {'max_depth': range(10, 18, 2), 
                         'n_estimators': 1000,
                         'criterion':['gini', 'entropy'], 
                         'max_features': ['sqrt', 0.33,0.4,0.66,0.8,1]
         }
         X_train, _, y_train, _ = self.splitted_data
-        grid = GridSearchCV(RandomForestClassifier(),
+        self.model = GridSearchCV(RandomForestClassifier(),
                             params, 
                             cv=5,
                             verbose=True)
-        grid.fit(X_train, y_train)
-        self.estimator = grid.best_estimator_
-    
-    def save_model(self):
-        """Saves the best model as pickle file."""
-        with open(SAVED_MODEL, 'wb') as file:
-            pickle.dump(self.estimator, file)
-    
-    def load_model(self):
-        """Loads a pretrained model"""
-        with open(SAVED_MODEL, 'rb') as f:
-            self.estimator = pickle.load(f)
+        self.model.fit(X_train, y_train)
   
-    def predict(self, data):
-        return self.estimator.predict(data)
+    def predict(self, data_path, sep=';'):
+        """Reads an unlabeled csv file and makes a prediction."""
+        data = pd.read_csv(data_path, sep=sep)
+        return self.model.best_estimator_.predict(data)
     
     def train_score(self):
         _, X_test, _, y_test = self.splitted_data
