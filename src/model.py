@@ -4,7 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import f1_score
 
-SAVED_MODEL = '../model/classifier.sav'
+
 
 class AirQualityClassifier():
     """
