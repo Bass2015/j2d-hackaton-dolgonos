@@ -37,9 +37,11 @@ class AirQualityClassifier():
         TypeError
             If the model passed as parameter is not of class GridSearchCV
         """
-        if not isinstance(model, GridSearchCV):
-            raise TypeError('model must be of class sklearn.model_selection.GridSearchCV')
-        self.model = model
+        if (isinstance(model, None) or 
+            isinstance(model, GridSearchCV)):
+            self.model = model
+            return
+        raise TypeError('model must be of class sklearn.model_selection.GridSearchCV')
 
     def load_data(self, train_file_path: str):
         """
@@ -100,6 +102,9 @@ class AirQualityClassifier():
         np.ndarray
             A 1D NumPy array containing the predicted labels
         """
+        if isinstance(self.model, None):
+            raise ValueError("""Model not trained, or object initialized with no model.
+                                Please fit the classifier to make a prediction.""")
         data = pd.read_csv(filepath, sep=sep)
         return self.model.best_estimator_.predict(data)
     
