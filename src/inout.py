@@ -3,7 +3,6 @@ import numpy as np
 import pickle
 import json
 
-
 def save_trained_model(path: str, model):
     """Saves a trained model as pickle file.
     

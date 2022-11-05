@@ -1,7 +1,6 @@
-import pandas as pd
-from model import AirQualityClassifier
 import inout
 import time
+from model import AirQualityClassifier
 
 SAVED_MODEL = '../model/classifier.sav'
 TRAIN_DATA = '../data/train.csv'
