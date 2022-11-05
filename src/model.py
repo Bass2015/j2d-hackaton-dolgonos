@@ -4,7 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import f1_score
 
-
+TRAIN_DATA = '../data/train.csv'
 
 class AirQualityClassifier():
     """
@@ -13,7 +13,8 @@ class AirQualityClassifier():
     
     The class actually uses a Grid Search to look for the best 
     combination of hyperparameters for the Random Forest. It's possible 
-    also to load a pretrained grid as a model.
+    also to load a pretrained grid as a model, specifying it in the 
+    constructor.
     
     Attributes
     --------
@@ -30,16 +31,18 @@ class AirQualityClassifier():
         Parameters
         ---------
         model: GridSearchCV
-            A trained model that can be used to make predictions
-        
+            A trained model that can be used to make predictions. 
+            Default -> None. In this case, it will be necessary to 
+            train a new model.
         Raises
         -----
         TypeError
             If the model passed as parameter is not of class GridSearchCV
         """
-        if (isinstance(model, None) or 
+        if (model is None or 
             isinstance(model, GridSearchCV)):
             self.model = model
+            self.load_data(TRAIN_DATA)
             return
         raise TypeError('model must be of class sklearn.model_selection.GridSearchCV')
 
@@ -75,7 +78,7 @@ class AirQualityClassifier():
         a class attribute
         """
         params = {'max_depth': range(10, 18, 2), 
-                        'n_estimators': 1000,
+                        'n_estimators': [1000],
                         'criterion':['gini', 'entropy'], 
                         'max_features': ['sqrt', 0.33,0.4,0.66,0.8,1]
         }
@@ -85,6 +88,7 @@ class AirQualityClassifier():
                             cv=5,
                             verbose=True)
         self.model.fit(X_train, y_train)
+        self.f1score = self.train_score
   
     def predict(self, filepath: str, sep: str=';') -> np.ndarray:
         """
@@ -102,7 +106,7 @@ class AirQualityClassifier():
         np.ndarray
             A 1D NumPy array containing the predicted labels
         """
-        if isinstance(self.model, None):
+        if self.model is None:
             raise ValueError("""Model not trained, or object initialized with no model.
                                 Please fit the classifier to make a prediction.""")
         data = pd.read_csv(filepath, sep=sep)
