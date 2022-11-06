@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, confusion_matrix
 
 TRAIN_DATA = '../data/train.csv'
 
@@ -12,9 +12,7 @@ class AirQualityClassifier():
     a RandomForest algorithm.
     
     The class actually uses a Grid Search to look for the best 
-    combination of hyperparameters for the Random Forest. It's possible 
-    also to load a pretrained grid as a model, specifying it in the 
-    constructor.
+    combination of hyperparameters for the Random Forest.
     
     Attributes
     --------
@@ -25,26 +23,15 @@ class AirQualityClassifier():
     model: sklearn.model_selection.GridSearchCV
         The trained model. If no model was provided using the constructor, 
         this attributes will be generated after using the fit() method
+    f1score: float
+        The f1 score (macro) of the best model, based on the test split of 
+        the train data
+    cm: np.ndarray
+        The confussion matrix of the best model, based on the test split 
+        of the train data
     """
-    def __init__(self, model: GridSearchCV=None) -> None:
-        """
-        Parameters
-        ---------
-        model: GridSearchCV
-            A trained model that can be used to make predictions. 
-            Default -> None. In this case, it will be necessary to 
-            train a new model.
-        Raises
-        -----
-        TypeError
-            If the model passed as parameter is not of class GridSearchCV
-        """
-        if (model is None or 
-            isinstance(model, GridSearchCV)):
-            self.model = model
-            self.load_data(TRAIN_DATA)
-            return
-        raise TypeError('model must be of class sklearn.model_selection.GridSearchCV')
+    def __init__(self):
+        self.load_data(TRAIN_DATA)
 
     def load_data(self, train_file_path: str):
         """
@@ -88,9 +75,8 @@ class AirQualityClassifier():
                             cv=5,
                             verbose=True)
         self.model.fit(X_train, y_train)
-        self.f1score = self.train_score
   
-    def predict(self, filepath: str, sep: str=';') -> np.ndarray:
+    def predict_from_csv(self, filepath: str, sep: str=';') -> np.ndarray:
         """
         Reads an unlabeled csv file and makes a prediction.
         
@@ -107,15 +93,17 @@ class AirQualityClassifier():
             A 1D NumPy array containing the predicted labels
         """
         if self.model is None:
-            raise ValueError("""Model not trained, or object initialized with no model.
-                                Please fit the classifier to make a prediction.""")
+            raise ValueError("""Model not trained. Please fit the 
+                                classifier to make a prediction.""")
         data = pd.read_csv(filepath, sep=sep)
         return self.model.best_estimator_.predict(data)
     
     def train_score(self) -> float:
         """
-        F1 score(macro) of the best model, based on test split of 
+        Calculates F1 score(macro) of the best model, based on test split of 
         the dataset used to train the model. 
+
+        Saves the score as a class attribute
         
         Returns
         -------
@@ -123,5 +111,23 @@ class AirQualityClassifier():
             The train f1 score
         """
         _, X_test, _, y_test = self.splitted_data
-        y_pred = self.predict(X_test)
-        return f1_score(y_test, y_pred, average='macro') 
+        y_pred = self.model.best_estimator_.predict(X_test)
+        self.f1score = f1_score(y_test, y_pred, average='macro') 
+        return self.f1score 
+    
+    def calculate_confusion_matrix(self) -> np.ndarray:
+        """
+        Calculates the confusion matrix of the best model, based on test split of 
+        the dataset used to train the model. 
+
+        Saves the confusion matrix as a class attribute
+        
+        Returns
+        -------
+        np.ndarray
+            The confusion matrix
+        """
+        _, X_test, _, y_test = self.splitted_data
+        y_pred = self.model.best_estimator_.predict(X_test)
+        self.cm = confusion_matrix(y_test, y_pred) 
+        return self.cm 
