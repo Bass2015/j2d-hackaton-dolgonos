@@ -30,8 +30,6 @@ class AirQualityClassifier():
         The confussion matrix of the best model, based on the test split 
         of the train data
     """
-    def __init__(self):
-        self.load_data(TRAIN_DATA)
 
     def load_data(self, train_file_path: str):
         """
@@ -55,25 +53,44 @@ class AirQualityClassifier():
             A list containing 4 dataframes: X_train, X_test, y_train, y_test
         """
         split_ratio = 1/((len(self.train_df.columns)-1)**0.5 +1)
-        data = self.train_df.drop('target', axis=1)
-        target = self.train_df['target']
+        data, target = self.separate_target(self.train_df)
         return train_test_split(data, target, test_size=split_ratio)
 
-    def fit(self):
+    def separate_target(self, dataset):
+        data = self.train_df.drop('target', axis=1)
+        target = self.train_df['target']
+        return data,target
+
+    def fit(self, whole_dataset=False):
         """
         Performs a grid search to find the best model and saves the model as
-        a class attribute
+        a class attribute. 
+
+        By default, the model trains on a portion of the train dataset, to evaluate
+        the performance against the other portion. If whole_dataset is set to 
+        True, the model trains on the whole dataset. 
+
+        Parameters
+        -----------
+        whole_dataset: bool
+            Whether the model will train on the whole dataset, or will use a splited
+            version of it
         """
         params = {'max_depth': range(10, 18, 2), 
                         'n_estimators': [1000],
                         'criterion':['gini', 'entropy'], 
                         'max_features': ['sqrt', 0.33,0.4,0.66,0.8,1]
         }
-        X_train, _, y_train, _ = self.splitted_data
+        if whole_dataset:
+            X_train, y_train = self.separate_target(self.train_df)
+        else:
+            X_train, _, y_train, _ = self.splitted_data
+            
         self.model = GridSearchCV(RandomForestClassifier(),
                             params, 
                             cv=5,
-                            verbose=True)
+                            scoring='f1_macro',
+                            verbose=3)
         self.model.fit(X_train, y_train)
   
     def predict_from_csv(self, filepath: str, sep: str=';') -> np.ndarray:
