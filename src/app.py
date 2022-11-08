@@ -31,17 +31,14 @@ def train_classifier(classifier, filepath, test=False):
     if test:
         score = classifier.train_score()
         classifier.calculate_confusion_matrix()
-    else:
-        score = classifier.model.best_estimator_.score
-    print(f"""The model has a score of {score} 
-            with the train data""")
+        print(f"""The model has a score of {score} with the train data""")
     print('Saving test model...')
     inout.save_trained_model(filepath, classifier)
     print('Saved')
 
-def make_predictions(final_classifier):
+def make_predictions(classifier):
     print('Saved. Saving predictions...')
-    prediction = final_classifier.predict_from_csv(TEST_DATA)
+    prediction = classifier.predict_from_csv(TEST_DATA)
     inout.save_predictions(PRED, prediction)
     print('Saved. Done!')
 
@@ -53,5 +50,6 @@ if __name__ == '__main__':
     print('Training on the whole dataset...')
     final_classifier = AirQualityClassifier()
     train_classifier(final_classifier, FINAL_MODEL)
+
+    make_predictions(final_classifier)
     
-    make_predictions(TEST_DATA, PRED, final_classifier)

@@ -90,7 +90,7 @@ class AirQualityClassifier():
                             params, 
                             cv=5,
                             scoring='f1_macro',
-                            verbose=3)
+                            verbose=2)
         self.model.fit(X_train, y_train)
   
     def predict_from_csv(self, filepath: str, sep: str=';') -> np.ndarray:
